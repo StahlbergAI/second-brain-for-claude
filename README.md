@@ -34,6 +34,12 @@ Expect 5 to 10 minutes for the first-time setup, most of which is graphify build
 
 See [WHY.md](WHY.md) for the token-waste story. Short version: a 50kloc codebase re-explored from scratch every conversation costs dozens of tool calls and hundreds of thousands of tokens before Claude even understands where anything is. This fixes that.
 
+## Also in this repo
+
+[`trading/`](trading/README.md) - a backtested futures trading strategy (diversified
+time-series momentum), automation runner, and Streamlit dashboard, built to connect to
+a Tradovate account. Unrelated to the wiki/graph tooling above; see its own README.
+
 ## Credits
 
 Karpathy's LLM wiki approach is the spiritual inspiration. [graphify](https://github.com/graphifyy/graphify) by @graphifyy does the heavy lifting for the graph layer. Everything here is the glue.

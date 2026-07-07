@@ -1,0 +1,12 @@
+pandas>=3.0
+numpy>=2.4
+requests>=2.33
+python-dotenv>=1.2
+streamlit>=1.59
+plotly>=6.8
+websocket-client>=1.9
+
+# Only needed if your machine's HTTPS is intercepted by antivirus/corporate SSL
+# inspection and plain `requests` fails with CERTIFICATE_VERIFY_FAILED - this makes
+# Python trust the Windows system certificate store instead of the bundled one.
+pip-system-certs>=4.0; sys_platform == "win32"
