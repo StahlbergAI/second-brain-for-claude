@@ -1,9 +1,18 @@
 # Trading system
 
-A backtested, semi-automated futures trading strategy with a dashboard, built to run
-against a [Tradovate](https://www.tradovate.com/) account.
+A backtested, semi-automated futures trading system with a dashboard, built to run
+against a [Tradovate](https://www.tradovate.com/) account. Two uncorrelated
+strategy sleeves (correlation 0.33), blended 50/50:
 
-## Strategy: diversified time-series momentum
+| | Sharpe (train) | Sharpe (test, 2019-2026) | Sharpe (full 25y) | Max DD |
+|---|---|---|---|---|
+| Momentum sleeve | 0.55 | 0.80 | 0.63 | -14.1% |
+| IBS mean-reversion sleeve | 0.65 | 1.22 | 0.85 | -11.9% |
+| **50/50 blend** | **0.74** | **1.27** | **0.92** | **-8.9%** |
+
+Reproduce with `python backtest/run_momentum.py` and `python backtest/run_meanrev.py`.
+
+## Sleeve 1: diversified time-series momentum
 
 Each of 6 liquid micro futures instruments gets a monthly-rebalanced position:
 
@@ -41,24 +50,39 @@ CAGR is on a notional-weighted basis (not accounting for futures margin leverage
 understates what's achievable on actual account equity - futures require far less margin
 than full notional. Treat CAGR as conservative and Sharpe as the number to trust.
 
+## Sleeve 2: IBS mean reversion (MES/MNQ, long-only)
+
+Internal Bar Strength = (close - low) / (high - low). Enter long when an equity index
+closes near its daily low (IBS < 0.2) while above its 200-day average; exit on a close
+near a daily high (IBS > 0.8). In the market only ~25% of days. Chosen because it
+survived validation unusually well: **100% of the parameter grid was profitable in both
+train and test**, with out-of-sample Sharpe ~1.0-1.3 (see `backtest/run_meanrev.py`).
+Blend parameters (0.2/0.8) are the middle of the grid, deliberately NOT the
+train-optimized values.
+
+Signals change daily, so the paper/live runner should run every day after the close.
+
 ### What didn't work (kept for context, not a bug)
 
-Simple single-instrument trend approaches were tried first and rejected:
-- Donchian breakout on ES/NQ: near-zero Sharpe in/out of sample
-- EMA(fast)/EMA(slow) crossover on ES/NQ: negative Sharpe
+Tried and rejected, with the evidence left in the repo:
+- Donchian breakout on ES/NQ: near-zero Sharpe in/out of sample (`backtest/run_search.py`)
+- EMA crossover on ES/NQ: negative Sharpe (same file)
+- N-day-low pullback mean reversion: train Sharpe 0.7-0.8 collapsed to 0.15-0.2 out of
+  sample - a textbook overfit, kept in `strategies/mean_reversion.py` as a cautionary tale
+- Adding bond futures (ZN/ZB) to the momentum basket: full-sample Sharpe dropped
 
 A symmetric long/short strategy on a single equity index fights that index's long-term
-upward drift on every short trade. See `backtest/run_search.py` / `data/search_results.csv`
-for the full grid search.
+upward drift on every short trade - which is why the surviving strategies are either
+diversified across asset classes (momentum) or long-only (IBS).
 
 ## Layout
 
 ```
 trading/
   data/           historical price CSVs, backtest results, live_trading.db (gitignored)
-  strategies/     signal generation (momentum.py is the one actually used)
-  backtest/       engine.py (bar-by-bar, used by the rejected single-instrument search)
-                  run_momentum.py (the real backtest - run this)
+  strategies/     momentum.py + mean_reversion.py (the two live sleeves)
+  backtest/       run_momentum.py + run_meanrev.py (the real backtests - run these)
+                  engine.py, run_search.py (rejected single-instrument experiments)
   broker/         tradovate_client.py (REST), paper_broker.py (local sim), trade_log.py
   scripts/        run_paper.py - free local paper trading (start here)
                   run_live.py - Tradovate order routing (needs API subscription)
@@ -74,8 +98,8 @@ pip install -r trading/requirements.txt
 # reproduce the backtest
 python trading/backtest/run_momentum.py
 
-# paper-trade locally - free, no broker account needed. Run daily or monthly
-# (signals only change at month end; daily runs just mark equity to market).
+# paper-trade locally - free, no broker account needed. Run DAILY after the
+# futures close: the mean-reversion sleeve trades on daily signals.
 python trading/scripts/run_paper.py
 
 # view the dashboard (backtest + paper/live activity)
