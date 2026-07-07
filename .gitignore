@@ -11,3 +11,5 @@ trading/*.db
 trading/data/*.db
 # reproducible data artifacts - regenerate with fetch_data.py / run_momentum.py
 trading/data/*.csv
+trading/data/intraday/
+trading/data/paper_runs.log

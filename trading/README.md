@@ -12,6 +12,32 @@ strategy sleeves (correlation 0.33), blended 50/50:
 
 Reproduce with `python backtest/run_momentum.py` and `python backtest/run_meanrev.py`.
 
+## Final validated system (`backtest/run_final_report.py`)
+
+The deployable configuration = 50/50 blend, x1.25 leverage (chosen on train+validation
+only, targeting max DD < 13%), 50% de-risking whenever the account is >10% below its
+peak, plus T-bill interest on ~90% of equity (futures margin efficiency; modeled at a
+flat 1.5%/yr, deliberately below the 25y realized average).
+
+60/20/20 split, the test fifth never touched during design:
+
+| Split | CAGR | Sharpe | Sortino | Max DD | Profit factor |
+|---|---|---|---|---|---|
+| Train (2001-2016) | 6.6% | 1.03 | 1.29 | -8.4% | 1.22 |
+| Validation (2016-2021) | 9.9% | 1.21 | 1.32 | -9.6% | 1.32 |
+| **Test (2021-2026, untouched)** | **8.9%** | **1.15** | **1.54** | **-8.0%** | **1.25** |
+| Full 25y | 7.7% | 1.09 | 1.33 | -9.6% | 1.25 |
+
+Worst calendar year in 25 years: -8.2% (2016). Best: +26.2% (2013). Daily win rate 57%.
+
+Monte Carlo (2000 block-bootstrapped 5-year paths): median CAGR 7.7%,
+P(max DD worse than -15%) = 2.5%, P(losing money over 5y) = 0.1%, P(-50% ruin) = 0.00%.
+
+CAGR sits just under 10% because sizing is deliberately conservative - with Sharpe ~1.1
+the leverage dial trades CAGR against drawdown roughly linearly, and the config above
+prioritizes the drawdown budget. Raising the DD budget to ~15-18% pushes CAGR past 10%;
+that is a risk-appetite decision, not a strategy change.
+
 ## Sleeve 1: diversified time-series momentum
 
 Each of 6 liquid micro futures instruments gets a monthly-rebalanced position:
@@ -70,6 +96,13 @@ Tried and rejected, with the evidence left in the repo:
 - N-day-low pullback mean reversion: train Sharpe 0.7-0.8 collapsed to 0.15-0.2 out of
   sample - a textbook overfit, kept in `strategies/mean_reversion.py` as a cautionary tale
 - Adding bond futures (ZN/ZB) to the momentum basket: full-sample Sharpe dropped
+- **Intraday day-trading / scalping** (`backtest/run_intraday.py`, 8 markets, hourly bars,
+  ~2.4y): intraday momentum negative on every split; opening-range breakout indistinguishable
+  from noise. The decisive stat: *random-direction* day trades with real micro-contract
+  costs (2 ticks + commission per round trip) produce **Sharpe -1.13 from cost drag alone**.
+  Any intraday edge must clear that hurdle before earning anything; at true scalping
+  frequency the hurdle is several times higher. Also: free data caps intraday history at
+  ~2 years hourly, so nothing at this frequency can be validated to this repo's standards.
 
 A symmetric long/short strategy on a single equity index fights that index's long-term
 upward drift on every short trade - which is why the surviving strategies are either
