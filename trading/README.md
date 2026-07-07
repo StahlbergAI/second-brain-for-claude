@@ -86,7 +86,8 @@ trading/
   broker/         tradovate_client.py (REST), paper_broker.py (local sim), trade_log.py
   scripts/        run_paper.py - free local paper trading (start here)
                   run_live.py - Tradovate order routing (needs API subscription)
-  dashboard/      app.py - Streamlit dashboard
+  dashboard/      server.py + web/ - the QUANT//MONITOR web dashboard (FastAPI + ECharts)
+                  app.py - simpler Streamlit alternative
   config/         settings.py (loads trading/.env), instruments.py (contract specs)
 ```
 
@@ -102,7 +103,11 @@ python trading/backtest/run_momentum.py
 # futures close: the mean-reversion sleeve trades on daily signals.
 python trading/scripts/run_paper.py
 
-# view the dashboard (backtest + paper/live activity)
+# the monitor dashboard (dark web UI: equity, positions, signals, execution feed)
+python -m uvicorn dashboard.server:app --port 8600 --app-dir trading
+# then open http://localhost:8600
+
+# alternative: the simpler Streamlit dashboard
 streamlit run trading/dashboard/app.py
 ```
 

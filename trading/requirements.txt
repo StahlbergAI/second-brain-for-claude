@@ -5,6 +5,8 @@ python-dotenv>=1.2
 streamlit>=1.59
 plotly>=6.8
 websocket-client>=1.9
+fastapi>=0.115
+uvicorn>=0.30
 
 # Only needed if your machine's HTTPS is intercepted by antivirus/corporate SSL
 # inspection and plain `requests` fails with CERTIFICATE_VERIFY_FAILED - this makes

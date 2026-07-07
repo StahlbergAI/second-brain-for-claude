@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QUANT // MONITOR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div>
+      <h1>QUANT<span class="accent">//</span>MONITOR</h1>
+      <div class="sub">dual-sleeve systematic futures · momentum × mean-reversion</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="status-pill" id="mode-pill"><span class="dot"></span>PAPER&nbsp;· SIM</div>
+    <div class="asof" id="asof">—</div>
+  </div>
+</header>
+
+<main>
+  <!-- KPI strip -->
+  <section class="kpis">
+    <div class="kpi hero">
+      <div class="kpi-label">NET LIQUIDATION</div>
+      <div class="kpi-value" id="kpi-equity">—</div>
+      <div class="kpi-delta" id="kpi-pnl">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">GROSS EXPOSURE</div>
+      <div class="kpi-value sm" id="kpi-gross">—</div>
+      <div class="kpi-sub">notional at risk</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">OPEN POSITIONS</div>
+      <div class="kpi-value sm" id="kpi-positions">—</div>
+      <div class="kpi-sub">across 6 markets</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">ORDERS FILLED</div>
+      <div class="kpi-value sm" id="kpi-orders">—</div>
+      <div class="kpi-sub">since inception</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">BLEND SHARPE</div>
+      <div class="kpi-value sm glow-green" id="kpi-sharpe">0.92</div>
+      <div class="kpi-sub">1.27 out-of-sample</div>
+    </div>
+  </section>
+
+  <!-- Equity + sleeves row -->
+  <section class="row">
+    <div class="panel wide">
+      <div class="panel-head"><h2>ACCOUNT EQUITY</h2><span class="tag" id="equity-tag">live paper account</span></div>
+      <div id="equity-chart" class="chart tall"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>SLEEVES</h2></div>
+      <div class="sleeve">
+        <div class="sleeve-top"><span class="sleeve-name">TS-MOMENTUM</span><span class="badge cyan">MONTHLY</span></div>
+        <div class="sleeve-desc">sign(12-mo return) · vol-targeted · 6 micro futures</div>
+        <div class="sleeve-stats"><span>Sharpe 0.63</span><span>OOS 0.80</span><span>DD −14.1%</span></div>
+      </div>
+      <div class="sleeve">
+        <div class="sleeve-top"><span class="sleeve-name">IBS MEAN-REV</span><span class="badge violet">DAILY</span></div>
+        <div class="sleeve-desc">weak-close bounce · MES/MNQ · long-only · ~25% exposure</div>
+        <div class="sleeve-stats"><span>Sharpe 0.85</span><span>OOS 1.22</span><span>DD −11.9%</span></div>
+      </div>
+      <div class="sleeve blend">
+        <div class="sleeve-top"><span class="sleeve-name">50/50 BLEND</span><span class="badge green">ACTIVE</span></div>
+        <div class="sleeve-stats big"><span>Sharpe <b>0.92</b></span><span>OOS <b>1.27</b></span><span>DD <b>−8.9%</b></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Positions / signals row -->
+  <section class="row">
+    <div class="panel">
+      <div class="panel-head"><h2>OPEN POSITIONS</h2></div>
+      <table id="positions-table">
+        <thead><tr><th>MKT</th><th>SIDE</th><th>QTY</th><th>MARK</th><th>NOTIONAL</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="empty" id="positions-empty" hidden>FLAT — NO OPEN RISK</div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>SIGNAL MATRIX</h2><span class="tag" id="signals-asof"></span></div>
+      <div id="signal-grid" class="signal-grid"></div>
+    </div>
+    <div class="panel wide">
+      <div class="panel-head"><h2>EXECUTION FEED</h2></div>
+      <div id="order-feed" class="feed"></div>
+    </div>
+  </section>
+
+  <!-- Backtest -->
+  <section class="row">
+    <div class="panel full">
+      <div class="panel-head">
+        <h2>BACKTEST — MOMENTUM SLEEVE, 25Y</h2>
+        <div class="stat-chips" id="bt-chips"></div>
+      </div>
+      <div id="backtest-chart" class="chart tall"></div>
+      <div class="footnote">Dashed marker = train/test boundary. Everything right of it is out-of-sample (2019→). IBS sleeve validated separately: 100% of parameter grid profitable in train AND test. Paper fills at daily close ± 1 tick + commission. Backtested performance is not a promise.</div>
+    </div>
+  </section>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

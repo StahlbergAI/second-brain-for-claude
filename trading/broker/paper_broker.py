@@ -105,7 +105,7 @@ def rebalance_to(symbol: str, target_contracts: int, price: float) -> int:
 
     action = "Buy" if delta > 0 else "Sell"
     log_order(symbol, action, abs(delta), "Market", None, "paper_filled",
-              note=f"paper fill @ {price}")
+              note=f"paper fill @ {price:,.4f}".rstrip("0").rstrip("."))
     return delta
 
 

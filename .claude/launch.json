@@ -6,6 +6,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "streamlit", "run", "trading/dashboard/app.py", "--server.headless", "true"],
       "port": 8501
+    },
+    {
+      "name": "trading-monitor",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "uvicorn", "dashboard.server:app", "--port", "8600", "--app-dir", "trading"],
+      "port": 8600
     }
   ]
 }
