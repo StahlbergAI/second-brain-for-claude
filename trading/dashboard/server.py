@@ -46,6 +46,8 @@ def summary():
     orders = _query("SELECT status FROM orders")
     equity = snaps[-1]["net_liq"] if snaps else None
     start = snaps[0]["net_liq"] if snaps else None
+    peak = max((s["net_liq"] for s in snaps), default=None)
+    dd = (equity / peak - 1) if equity and peak else 0.0
     gross_notional = sum(
         abs(p["contracts"]) * p["last_mark_price"] * INSTRUMENTS[p["symbol"]].multiplier
         for p in positions if p["symbol"] in INSTRUMENTS
@@ -58,7 +60,34 @@ def summary():
         "orders_filled": sum(1 for o in orders if o["status"] != "dry_run"),
         "gross_notional": gross_notional,
         "last_update": snaps[-1]["ts"] if snaps else None,
+        "drawdown": dd,
+        "derisk_active": dd < -0.10,  # mirrors the 50%-derisk rule in the final system
     }
+
+
+@app.get("/api/expression")
+def expression():
+    """Latest ideal (fractional) vs actual (integer) contracts per instrument -
+    shows how much of the strategy the current account size can express."""
+    rows = _query("SELECT ts, symbol, mom_ideal, mr_ideal, actual FROM ideal_targets "
+                   "WHERE ts = (SELECT MAX(ts) FROM ideal_targets) ORDER BY symbol")
+    for r in rows:
+        r["ideal"] = r["mom_ideal"] + r["mr_ideal"]
+    ideal_total = sum(abs(r["ideal"]) for r in rows)
+    actual_total = sum(abs(r["actual"]) for r in rows)
+    return {"rows": rows,
+            "expression_pct": (actual_total / ideal_total) if ideal_total else None}
+
+
+@app.get("/api/attribution")
+def attribution():
+    return _query("SELECT symbol, cum_pnl FROM paper_pnl ORDER BY cum_pnl DESC")
+
+
+@app.get("/api/health")
+def health():
+    runs = _query("SELECT ts, status, message FROM run_log ORDER BY ts DESC LIMIT 8")
+    return {"runs": runs, "last_ok": bool(runs) and runs[0]["status"] == "ok"}
 
 
 @app.get("/api/equity")

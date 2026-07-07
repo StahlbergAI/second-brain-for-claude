@@ -28,7 +28,21 @@ CREATE TABLE IF NOT EXISTS paper_positions (
     contracts INTEGER NOT NULL,
     last_mark_price REAL NOT NULL
 );
+
+-- cumulative realized+settled P&L per instrument (costs included), for attribution
+CREATE TABLE IF NOT EXISTS paper_pnl (
+    symbol TEXT PRIMARY KEY,
+    cum_pnl REAL NOT NULL DEFAULT 0
+);
 """
+
+
+def _add_pnl(conn, symbol: str, amount: float):
+    conn.execute(
+        "INSERT INTO paper_pnl (symbol, cum_pnl) VALUES (?, ?) "
+        "ON CONFLICT(symbol) DO UPDATE SET cum_pnl = cum_pnl + excluded.cum_pnl",
+        (symbol, amount),
+    )
 
 
 @contextmanager
@@ -79,7 +93,9 @@ def mark_to_market(latest_prices: dict[str, float]) -> float:
             if px is None:
                 continue
             spec = INSTRUMENTS[symbol]
-            cash += contracts * (px - last_mark) * spec.multiplier
+            settle = contracts * (px - last_mark) * spec.multiplier
+            cash += settle
+            _add_pnl(conn, symbol, settle)
             set_position(conn, symbol, contracts, px)
         set_cash(conn, cash)
         return cash
@@ -99,6 +115,7 @@ def rebalance_to(symbol: str, target_contracts: int, price: float) -> int:
         slippage_cost = abs(delta) * spec.tick_size * spec.multiplier
         commission = abs(delta) * spec.commission_rt / 2  # rt estimate / 2 per fill
         cash -= slippage_cost + commission
+        _add_pnl(conn, symbol, -(slippage_cost + commission))
 
         set_position(conn, symbol, target_contracts, price)
         set_cash(conn, cash)

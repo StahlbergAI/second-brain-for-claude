@@ -182,6 +182,52 @@ td.sym { font-weight: 700; letter-spacing: 1px; }
 .feed-row .sell { color: var(--red); font-weight: 700; }
 .feed-row .note { color: #7e93b8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* expression panel */
+.expr-row {
+  display: grid; grid-template-columns: 44px 1fr 92px;
+  gap: 10px; align-items: center; padding: 7px 2px;
+  font-family: var(--mono); font-size: 11.5px;
+  border-bottom: 1px solid rgba(90, 130, 255, 0.06);
+}
+.expr-row .sym { font-weight: 700; letter-spacing: 1px; }
+.expr-bar { position: relative; height: 10px; background: rgba(100, 116, 139, 0.15); border-radius: 5px; overflow: hidden; }
+.expr-bar .ideal { position: absolute; top: 0; bottom: 0; background: rgba(34, 211, 238, 0.25); border-radius: 5px; }
+.expr-bar .actual { position: absolute; top: 0; bottom: 0; background: var(--green); border-radius: 5px; box-shadow: 0 0 8px rgba(52, 211, 153, 0.5); }
+.expr-bar .actual.short, .expr-bar .ideal.short { background: rgba(251, 113, 133, 0.7); }
+.expr-bar .ideal.short { background: rgba(251, 113, 133, 0.22); }
+.expr-row .nums { text-align: right; color: var(--muted); }
+
+/* attribution panel */
+.attr-row {
+  display: grid; grid-template-columns: 44px 1fr 84px;
+  gap: 10px; align-items: center; padding: 7px 2px;
+  font-family: var(--mono); font-size: 11.5px;
+  border-bottom: 1px solid rgba(90, 130, 255, 0.06);
+}
+.attr-row .sym { font-weight: 700; letter-spacing: 1px; }
+.attr-bar { position: relative; height: 10px; }
+.attr-bar .fill { position: absolute; top: 0; bottom: 0; border-radius: 5px; }
+.attr-row .val { text-align: right; }
+
+/* health panel */
+.health-row {
+  font-family: var(--mono); font-size: 12px; padding: 8px 10px;
+  border: 1px solid rgba(90, 130, 255, 0.12); border-radius: 10px;
+  margin-bottom: 10px; background: rgba(10, 14, 26, 0.5);
+}
+.health-row .ok { color: var(--green); }
+.health-row .warn { color: var(--amber); }
+.run-row {
+  display: grid; grid-template-columns: 14px 150px auto;
+  gap: 8px; padding: 6px 2px; align-items: center;
+  border-bottom: 1px solid rgba(90, 130, 255, 0.06);
+  font-family: var(--mono); font-size: 11px;
+}
+.run-dot { width: 8px; height: 8px; border-radius: 50%; }
+.run-dot.ok { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.run-dot.error { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.run-row .msg { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* backtest */
 .stat-chips { display: flex; gap: 10px; flex-wrap: wrap; }
 .chip {

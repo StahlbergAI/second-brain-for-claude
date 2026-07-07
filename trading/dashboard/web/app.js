@@ -95,6 +95,64 @@ async function renderOrders() {
     : `<div class="empty">NO EXECUTIONS YET</div>`;
 }
 
+async function renderExpression() {
+  const e = await j("/api/expression");
+  if (!e.rows || !e.rows.length) return;
+  const maxAbs = Math.max(...e.rows.map(r => Math.abs(r.ideal)), 1);
+  $("expr-pct").textContent = e.expression_pct == null ? ""
+    : `expressing ${(e.expression_pct * 100).toFixed(0)}% of ideal`;
+  $("expression-list").innerHTML = e.rows.map(r => {
+    const iw = Math.min(Math.abs(r.ideal) / maxAbs * 100, 100);
+    const aw = Math.min(Math.abs(r.actual) / maxAbs * 100, 100);
+    const shortCls = r.ideal < 0 ? " short" : "";
+    return `<div class="expr-row">
+      <span class="sym">${r.symbol}</span>
+      <div class="expr-bar">
+        <div class="ideal${shortCls}" style="width:${iw}%"></div>
+        <div class="actual${shortCls}" style="width:${aw}%"></div>
+      </div>
+      <span class="nums">${r.ideal >= 0 ? "+" : ""}${r.ideal.toFixed(2)} → ${r.actual >= 0 ? "+" : ""}${r.actual}</span>
+    </div>`;
+  }).join("");
+  const pct = e.expression_pct;
+  $("expr-note").textContent = pct != null && pct < 0.5
+    ? "Pale bar = contracts the strategy wants (fractional); solid = what account size allows. " +
+      "Low expression means the account is too small for whole contracts - the edge exists but can't be deployed at this equity."
+    : "Pale bar = ideal fractional position, solid bar = actual whole contracts held.";
+}
+
+async function renderAttribution() {
+  const rows = await j("/api/attribution");
+  if (!rows.length) { $("attribution-empty").hidden = false; return; }
+  const maxAbs = Math.max(...rows.map(r => Math.abs(r.cum_pnl)), 1);
+  $("attribution-list").innerHTML = rows.map(r => {
+    const w = Math.abs(r.cum_pnl) / maxAbs * 100;
+    const pos = r.cum_pnl >= 0;
+    return `<div class="attr-row">
+      <span class="sym">${r.symbol}</span>
+      <div class="attr-bar"><div class="fill" style="width:${w}%;
+        background:${pos ? "var(--green)" : "var(--red)"};
+        ${pos ? "box-shadow:0 0 8px rgba(52,211,153,.4)" : "box-shadow:0 0 8px rgba(251,113,133,.4)"}"></div></div>
+      <span class="val ${pos ? "pos" : "neg"}">${pos ? "+" : "−"}$${Math.abs(r.cum_pnl).toFixed(0)}</span>
+    </div>`;
+  }).join("");
+}
+
+async function renderHealth() {
+  const [h, s] = await Promise.all([j("/api/health"), j("/api/summary")]);
+  $("health-state").textContent = h.last_ok ? "nominal" : (h.runs.length ? "LAST RUN FAILED" : "no runs yet");
+  const dd = s.drawdown ?? 0;
+  $("dd-state").innerHTML = s.derisk_active
+    ? `<span class="warn">⚠ DRAWDOWN ${(dd * 100).toFixed(1)}% — DE-RISK ACTIVE (size halved beyond −10%)</span>`
+    : `<span class="ok">drawdown ${(dd * 100).toFixed(1)}% — full size (de-risk arms at −10%)</span>`;
+  $("run-log").innerHTML = h.runs.map(r => `
+    <div class="run-row">
+      <span class="run-dot ${r.status === "ok" ? "ok" : "error"}"></span>
+      <span>${r.ts}</span>
+      <span class="msg">${r.status}${r.message ? " · " + r.message : ""}</span>
+    </div>`).join("") || `<div class="empty">NO RUNS LOGGED</div>`;
+}
+
 async function renderBacktest() {
   const bt = await j("/api/backtest");
   if (!bt.curve.length) return;
@@ -128,5 +186,6 @@ async function renderBacktest() {
 
 (async () => {
   await Promise.all([renderSummary(), renderEquity(), renderPositions(),
-                     renderSignals(), renderOrders(), renderBacktest()]);
+                     renderSignals(), renderOrders(), renderBacktest(),
+                     renderExpression(), renderAttribution(), renderHealth()]);
 })();

@@ -35,7 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pandas as pd
 
 from broker import paper_broker
-from broker.trade_log import log_target_weight
+from broker.trade_log import log_ideal_target, log_run, log_target_weight
 from config.instruments import INSTRUMENTS
 from data.fetch_data import fetch, DATA_DIR
 from strategies.mean_reversion import ibs_state
@@ -91,10 +91,11 @@ def main():
 
         delta = paper_broker.rebalance_to(root, target, px)
         log_target_weight(root, w, target, target - delta)
+        log_ideal_target(root, mom_target, mr_target, target)
         status = f"traded {delta:+d}" if delta else "no change"
         mr_note = f" mr={mr_w:.0f}" if root in MR_INSTRUMENTS else ""
         print(f"  {root}: mom_weight={w:+.2f}{mr_note} price={px:,.2f} "
-              f"target={target:+d} contracts ({status})")
+              f"ideal={mom_target + mr_target:+.2f} -> target={target:+d} ({status})")
 
     equity = paper_broker.snapshot_equity()
     print(f"Paper equity after rebalance: ${equity:,.2f}")
@@ -102,8 +103,17 @@ def main():
         print(f"WARNING: {quantized_away}/{n} non-flat signals rounded to 0 contracts - "
               f"equity is too small for this vol target. Raise PAPER_STARTING_EQUITY "
               f"(fresh DB) or PAPER_TARGET_VOL to trade the strategy meaningfully.")
-    print("View the dashboard with: streamlit run dashboard/app.py")
+    log_run("ok", f"equity={equity:.2f} quantized_away={quantized_away}/{n}")
+    print("Dashboard: python -m uvicorn dashboard.server:app --port 8600 --app-dir trading")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as exc:
+        # a silent nightly failure is the operational killer - make it visible
+        try:
+            log_run("error", f"{type(exc).__name__}: {exc}")
+        except Exception:
+            pass
+        raise
