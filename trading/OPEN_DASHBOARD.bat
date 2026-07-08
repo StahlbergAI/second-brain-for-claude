@@ -1,7 +1,10 @@
 @echo off
-rem Double-click me: starts the QUANT//MONITOR server and opens it in your browser.
+rem Double-click me: starts the QUANT//MONITOR server, then opens your browser.
 cd /d "%~dp0"
+
+rem Start the server in its own window (stays open so any error is readable).
+start "QUANT-MONITOR server - close me to stop the dashboard" cmd /k python -m uvicorn dashboard.server:app --port 8600
+
+rem Give it a moment to bind, then open the browser.
+timeout /t 3 /nobreak >nul
 start "" http://localhost:8600
-echo Dashboard running at http://localhost:8600 - keep this window open.
-echo Close this window (or press Ctrl+C) to stop the dashboard.
-python -m uvicorn dashboard.server:app --port 8600
